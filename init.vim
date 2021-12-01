@@ -32,6 +32,9 @@ call plug#begin('~/.config/nvim/plugged')
 " COC
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
+Plug 'prettier/vim-prettier', { 'do': 'npm install' }
+Plug 'mattn/emmet-vim'
+
 " Sensible default 
 Plug 'tpope/vim-sensible'
 
@@ -42,9 +45,6 @@ Plug 'sainnhe/edge'
 Plug 'nvim-lua/popup.nvim'
 Plug 'nvim-lua/plenary.nvim'
 Plug 'nvim-telescope/telescope.nvim'
-
-" Treesitter
-Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
 
 " File Explorer
 Plug 'kyazdani42/nvim-web-devicons'
@@ -59,17 +59,29 @@ Plug 'tpope/vim-surround'
 
 Plug 'unblevable/quick-scope'
 
-Plug 'SirVer/ultisnips'
-Plug 'honza/vim-snippets'
-
-Plug 'mattn/emmet-vim'
-
 Plug 'itchyny/lightline.vim'
 
 Plug 'scrooloose/nerdtree', { 'on': ['NERDTreeToggle', 'NERDTreeFind'] }
 Plug 'ryanoasis/vim-devicons'
-" Plug 'andymass/vim-matchup'
+Plug 'andymass/vim-matchup'
+Plug 'nathanaelkane/vim-indent-guides'
+
+Plug 'dense-analysis/ale'
+
+" Track the engine.
+Plug 'SirVer/ultisnips'
+
+" Snippets are separated from the engine. Add this if you want them:
+Plug 'honza/vim-snippets'
+
 call plug#end()
+
+" Trigger configuration. You need to change this to something other than <tab> if you use one of the following:
+" - https://github.com/Valloric/YouCompleteMe
+" - https://github.com/nvim-lua/completion-nvim
+let g:UltiSnipsExpandTrigger="<c-s-u>"
+let g:UltiSnipsJumpForwardTrigger="<c-b>"
+let g:UltiSnipsJumpBackwardTrigger="<c-z>"
 
 " Automatically install missing plugins on startup
 autocmd VimEnter *
@@ -92,10 +104,11 @@ let mapleader = ' '
 syntax enable
 filetype plugin indent on
 
-set guicursor=
 set nu rnu
-set completeopt=menuone,noinsert,noselect
+set completeopt=longest,menuone,noinsert,noselect
 set shortmess+=c
+set cmdheight=2
+set updatetime=50
 set encoding=UTF-8
 set splitright
 set splitbelow
@@ -118,13 +131,19 @@ set undofile
 set incsearch
 set scrolloff=8
 set noshowmode
-set signcolumn=yes
 set ignorecase
 set smartcase
 set title
 set showmatch
 set matchtime=3
-
+" Always show the signcolumn, otherwise it would shift the text each time
+" diagnostics appear/become resolved.
+if has("nvim-0.5.0") || has("patch-8.1.1564")
+  " Recently vim can merge signcolumn and number column into one
+  set signcolumn=number
+else
+  set signcolumn=yes
+endif
 
 " DISPLAY ALL MATCHING FILES WHEN WE TAB COMPLETE
 set wildmenu
@@ -232,37 +251,37 @@ augroup highlight_yank
   autocmd TextYankPost * silent! lua require'vim.highlight'.on_yank()
 augroup END
 
-" --------------- Completion --------------------------------
+" ------------------ COC --------------------------------
 " Use tab for trigger completion with characters ahead and navigate.
 " NOTE: Use command ':verbose imap <tab>' to make sure tab is not mapped by
 " other plugin before putting this into your config.
 inoremap <silent><expr> <TAB>
-            \ pumvisible() ? "\<C-n>" :
-            \ <SID>check_back_space() ? "\<TAB>" :
-            \ coc#refresh()
+      \ pumvisible() ? "\<C-n>" :
+      \ <SID>check_back_space() ? "\<TAB>" :
+      \ coc#refresh()
 inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
 
 function! s:check_back_space() abort
-    let col = col('.') - 1
-    return !col || getline('.')[col - 1]  =~# '\s'
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1]  =~# '\s'
 endfunction
 
 " Use <c-space> to trigger completion.
 if has('nvim')
-    inoremap <silent><expr> <c-space> coc#refresh()
-else
-    inoremap <silent><expr> <c-@> coc#refresh()
+  inoremap <silent><expr> <c-space> coc#refresh()
+
+  inoremap <silent><expr> <c-@> coc#refresh()
 endif
 
 " Make <CR> auto-select the first completion item and notify coc.nvim to
 " format on enter, <cr> could be remapped by other vim plugin
 inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm()
-            \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
+                              \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
 
 " Use `[g` and `]g` to navigate diagnostics
 " Use `:CocDiagnostics` to get all diagnostics of current buffer in location list.
-" nmap <silent> [g <Plug>(coc-diagnostic-prev)
-" nmap <silent> ]g <Plug>(coc-diagnostic-next)
+nmap <silent> [g <Plug>(coc-diagnostic-prev)
+nmap <silent> ]g <Plug>(coc-diagnostic-next)
 
 " GoTo code navigation.
 nmap <silent> gd <Plug>(coc-definition)
@@ -274,13 +293,13 @@ nmap <silent> gr <Plug>(coc-references)
 nnoremap <silent> K :call <SID>show_documentation()<CR>
 
 function! s:show_documentation()
-    if (index(['vim','help'], &filetype) >= 0)
-        execute 'h '.expand('<cword>')
-    elseif (coc#rpc#ready())
-        call CocActionAsync('doHover')
-    else
-        execute '!' . &keywordprg . " " . expand('<cword>')
-    endif
+  if (index(['vim','help'], &filetype) >= 0)
+    execute 'h '.expand('<cword>')
+  elseif (coc#rpc#ready())
+    call CocActionAsync('doHover')
+  else
+    execute '!' . &keywordprg . " " . expand('<cword>')
+  endif
 endfunction
 
 " Highlight the symbol and its references when holding the cursor.
@@ -290,10 +309,10 @@ autocmd CursorHold * silent call CocActionAsync('highlight')
 nmap <leader>rn <Plug>(coc-rename)
 
 " Formatting selected code.
-" xmap <leader>f  <Plug>(coc-format-selected)
-" nmap <leader>f  <Plug>(coc-format-selected)
+xmap <leader>f  <Plug>(coc-format-selected)
+nmap <leader>f  <Plug>(coc-format-selected)
 
-" --------------- Completion --------------------------------
+" ------------------ COC --------------------------------
 
 
 " ----------------- TELESCOPE ---------------------------
@@ -320,19 +339,19 @@ EOF
 
 " ----------------- TELESCOPE ---------------------------
 "
-" ----------------TREESITTER ---------------------------
+" -------------- TREESITTER ---------------------------
 
-lua <<EOF
-require'nvim-treesitter.configs'.setup {
-  highlight = {
-    enable = true
-  },
-}
-EOF
+" lua <<EOF
+" require'nvim-treesitter.configs'.setup {
+"     highlight = {
+"         enable = true
+"     },
+" }
+" EOF
 
-" ----------------TREESITTER ---------------------------
+" -------------- TREESITTER ---------------------------
 
-" ---------------- FILE EXPLORER -----------------------
+" -------------- FILE EXPLORER -----------------------
 nnoremap <leader>tt :NvimTreeToggle<CR>
 nnoremap <leader>tr :NvimTreeRefresh<CR>
 nnoremap <leader>tn :NvimTreeFindFile<CR>
@@ -344,13 +363,13 @@ require'nvim-tree'.setup()
 EOF
 
 " NvimTreeOpen and NvimTreeClose are also available if you need them
-" ---------------- FILE EXPLORER -----------------------
+" -------------- FILE EXPLORER -----------------------
 
-" --------------- EMMET -------------------------------
+" -------------- EMMET -------------------------------
 
 let g:user_emmet_leader_key=','
 
-" --------------- EMMET -------------------------------
+" -------------- EMMET -------------------------------
 "
 " -------------- NERDTREE ----------------------------
 " <alt-shift-b>
@@ -365,3 +384,165 @@ let g:NERDTreeIgnore = ['.gitconfig', '.DS_Store']
 let g:NERDTreeStatusline = ''
 let g:NERDTreeWinSize=45
 " -------------- NERDTREE ----------------------------
+"
+" -------------- LIGHTLINE  ----------------------------
+
+let g:lightline = {
+      \ 'colorscheme': 'wombat',
+      \ 'active': {
+      \   'left': [ [ 'mode', 'paste' ],
+      \             [ 'gitbranch', 'readonly', 'filename', 'modified' ] ]
+      \ },
+      \ 'component_function': {
+      \   'gitbranch': 'FugitiveHead'
+      \ },
+      \ }
+
+" -------------- LIGHTLINE  ----------------------------
+
+" -------------- COC ----------------------------------
+
+let g:coc_global_extensions = ['coc-css', 'coc-html', 'coc-json' ]
+
+" coc-tsserver        " javascript/typescript server - completion, refactor etc
+" coc-tslint-plugin   " javascript/tyescript linting
+" coc-snippets        " provides snippets engine as in vscode (see my previous article)
+" coc-highlight       " provides basic highlight of words selected
+" coc-emmet           " emmet! works as in vscode
+" coc-marketplace     " marketplace to simplify search and installation of coc extensions
+" coc-html            " html - completion, refactor etc
+" coc-json            " json - completion, refactor etc
+" coc-vetur           " famous vscode plugin - completion,refactor,linting and much more
+" coc-css             " css
+" -------------- COC ----------------------------------
+"
+" -------------- ALE -------------------------------
+"
+"ALE settings
+let g:ale_disable_lsp = 1
+
+nmap <silent> <C-e> <Plug>(ale_next_wrap)
+
+" don’t lint on open files
+let g:ale_lint_on_enter = 0
+
+" lint on save
+let g:ale_lint_on_save = 1
+
+" make it prettier
+let g:ale_sign_error = '✘'
+let g:ale_sign_warning = '●'
+augroup FiletypeGroup
+    autocmd!
+    au BufNewFile,BufRead *.jsx set filetype=javascript.jsx
+augroup END
+
+let g:ale_linter_aliases = {
+            \ 'jsx': ['css', 'javascript'],
+            \ 'vue': ['eslint', 'vls']
+            \}
+
+let g:ale_linters = {
+            \ 'jsx': ['stylelint', 'eslint'],
+            \ 'rust': ['analyzer', 'cargo', 'rls'],
+            \ 'vim': ['vint'],
+            \ 'zsh': ['shell', 'shellcheck'],
+            \ 'markdown': ['md', 'txt'],
+            \}
+
+
+let g:ale_fixers = {
+            \ 'javascript': ['eslint'],
+            \ '*': ['remove_trailing_lines', 'trim_whitespace'],
+            \ 'rust': ['rustfmt'],
+            \}
+
+" let g:ale_fix_on_save = 1
+
+let g:ale_sign_column_always = 1
+let g:ale_echo_msg_error_str = 'E'
+let g:ale_echo_msg_warning_str = 'W'
+let g:ale_echo_msg_format = '[%linter%] %s [%severity%]'
+let g:ale_lint_on_insert_leave = 1
+let g:ale_set_loclist = 1
+let g:ale_set_quickfix = 0
+let g:ale_open_list = 0
+let g:ale_list_window_size = 5
+
+" -------------- ALE -------------------------------
+"
+" Buffer
+" Buffer delete: alt - w
+nnoremap ∑ :bd<CR>
+
+" --------------- AUTO CLOSE -----------------------
+
+" https://alldrops.info/posts/vim-drops/2018-05-15_understand-vim-mappings-and-create-your-own-shortcuts/
+" https://medium.com/vim-drops/custom-autoclose-mappings-1ff90f45c6f5
+
+"autoclose and position cursor to write text inside
+inoremap ' ''<left>
+inoremap ` ``<left>
+inoremap " ""<left>
+inoremap ( ()<left>
+inoremap [ []<left>
+inoremap { {}<left>
+inoremap < <><left>
+"autoclose with ; and position cursor to write text inside
+inoremap '; '';<left><left>
+inoremap `; ``;<left><left>
+inoremap "; "";<left><left>
+inoremap (; ();<left><left>
+inoremap [; [];<left><left>
+inoremap {; {};<left><left>
+"autoclose with , and position cursor to write text inside
+inoremap ', '',<left><left>
+inoremap `, ``,<left><left>
+inoremap ", "",<left><left>
+inoremap (, (),<left><left>
+inoremap [, [],<left><left>
+inoremap {, {},<left><left>
+"autoclose and position cursor after
+inoremap '<tab> ''
+inoremap `<tab> ``
+inoremap "<tab> ""
+inoremap (<tab> ()
+inoremap [<tab> []
+inoremap {<tab> {}
+"autoclose with ; and position cursor after
+inoremap ';<tab> '';
+inoremap `;<tab> ``;
+inoremap ";<tab> "";
+inoremap (;<tab> ();
+inoremap [;<tab> [];
+inoremap {;<tab> {};
+"autoclose with , and position cursor after
+inoremap ',<tab> '',
+inoremap `,<tab> ``,
+inoremap ",<tab> "",
+inoremap (,<tab> (),
+inoremap [,<tab> [],
+inoremap {,<tab> {},
+"autoclose 2 lines below and position cursor in the middle
+inoremap '<CR> '<CR>'<ESC>O
+inoremap `<CR> `<CR>`<ESC>O
+inoremap "<CR> "<CR>"<ESC>O
+inoremap (<CR> (<CR>)<ESC>O
+inoremap [<CR> [<CR>]<ESC>O
+inoremap {<CR> {<CR>}<ESC>O
+"autoclose 2 lines below adding ; and position cursor in the middle
+inoremap ';<CR> '<CR>';<ESC>O
+inoremap `;<CR> `<CR>`;<ESC>O
+inoremap ";<CR> "<CR>";<ESC>O
+inoremap (;<CR> (<CR>);<ESC>O
+inoremap [;<CR> [<CR>];<ESC>O
+inoremap {;<CR> {<CR>};<ESC>O
+"autoclose 2 lines below adding , and position cursor in the middle
+inoremap ',<CR> '<CR>',<ESC>O
+inoremap `,<CR> `<CR>`,<ESC>O
+inoremap ",<CR> "<CR>",<ESC>O
+inoremap (,<CR> (<CR>),<ESC>O
+inoremap [,<CR> [<CR>],<ESC>O
+inoremap {,<CR> {<CR>},<ESC>O
+
+" --------------- AUTO CLOSE -----------------------
