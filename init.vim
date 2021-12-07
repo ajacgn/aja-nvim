@@ -23,6 +23,62 @@ if !filereadable(vimplug_exists)
 
   autocmd VimEnter * PlugInstall
 endif
+
+" -------------- ALE -------------------------------
+"
+"ALE settings
+
+nmap <silent> <C-e> <Plug>(ale_next_wrap)
+
+" don’t lint on open files
+let g:ale_lint_on_enter = 0
+
+" lint on save
+let g:ale_lint_on_save = 1
+
+" make it prettier
+let g:ale_sign_error = '✘'
+let g:ale_sign_warning = '●'
+augroup FiletypeGroup
+    autocmd!
+    au BufNewFile,BufRead *.jsx set filetype=javascript.jsx
+augroup END
+
+let g:ale_linter_aliases = {
+            \ 'jsx': ['css', 'javascript'],
+            \ 'vue': ['eslint', 'vls']
+            \}
+
+let g:ale_linters = {
+            \ 'jsx': ['stylelint', 'eslint'],
+            \ 'vim': ['vint'],
+            \ 'zsh': ['shell', 'shellcheck'],
+            \ 'markdown': ['md', 'txt'],
+            \}
+
+
+let g:ale_fixers = {
+            \ 'javascript': ['eslint', 'prettier'],
+            \ 'css': ['css'],
+            \ '*': ['remove_trailing_lines', 'trim_whitespace'],
+            \}
+
+" let g:ale_fix_on_save = 1
+
+let g:ale_sign_column_always = 1
+let g:ale_echo_msg_error_str = 'E'
+let g:ale_echo_msg_warning_str = 'W'
+let g:ale_echo_msg_format = '[%linter%] %s [%severity%]'
+let g:ale_lint_on_insert_leave = 1
+let g:ale_set_loclist = 1
+let g:ale_set_quickfix = 0
+let g:ale_open_list = 0
+let g:ale_list_window_size = 5
+
+let g:ale_disable_lsp = 1
+
+" -------------- ALE -------------------------------
+
 " -------- END VIM-PLUG SETUP ----
 
 set nocompatible
@@ -56,6 +112,8 @@ Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-repeat'
 Plug 'tpope/vim-sleuth'
 Plug 'tpope/vim-surround'
+
+Plug 'airblade/vim-gitgutter'
 
 Plug 'unblevable/quick-scope'
 
@@ -93,9 +151,11 @@ if has('termguicolors')
   set termguicolors
 endif
 
-let g:edge_style = 'aura'
+let g:edge_style = 'neon'
 let g:edge_enable_italic = 1
 let g:edge_disable_italic_comment = 1
+let g:edge_cursor = 'auto'
+
 colorscheme edge
 
 "" REMAP LEADER KEY
@@ -108,7 +168,7 @@ set nu rnu
 set completeopt=longest,menuone,noinsert,noselect
 set shortmess+=c
 set cmdheight=2
-set updatetime=50
+set updatetime=100
 set encoding=UTF-8
 set splitright
 set splitbelow
@@ -117,8 +177,8 @@ set relativenumber
 set hlsearch
 set hidden
 set noerrorbells
-set tabstop=4 softtabstop=4
-set shiftwidth=4
+set tabstop=2 softtabstop=2
+set shiftwidth=2
 set shiftround
 set expandtab
 set smartindent
@@ -273,6 +333,9 @@ if has('nvim')
   inoremap <silent><expr> <c-@> coc#refresh()
 endif
 
+" Change current directory to open file directory
+nnoremap <leader>cd :cd %:p:h<CR>:pwd<CR>
+
 " Make <CR> auto-select the first completion item and notify coc.nvim to
 " format on enter, <cr> could be remapped by other vim plugin
 inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm()
@@ -312,6 +375,9 @@ nmap <leader>rn <Plug>(coc-rename)
 xmap <leader>f  <Plug>(coc-format-selected)
 nmap <leader>f  <Plug>(coc-format-selected)
 
+" Code actions
+nmap <leader>do <Plug>(coc-codeaction)
+
 " ------------------ COC --------------------------------
 
 
@@ -320,14 +386,16 @@ nmap <leader>f  <Plug>(coc-format-selected)
 " Find files using Telescope command-line sugar.
 nnoremap <leader>ff <cmd>Telescope find_files<cr>
 nnoremap <leader>fg <cmd>Telescope live_grep<cr>
-nnoremap <leader>fb <cmd>Telescope buffers<cr>
+nnoremap <leader>bb <cmd>Telescope buffers<cr>
 nnoremap <leader>fh <cmd>Telescope help_tags<cr>
 nnoremap <leader>fl <cmd>Telescope git_files<cr>
+nnoremap <leader>f* <cmd>Telescope grep_string<cr>
 
 lua <<EOF
 local actions = require('telescope.actions')
 require('telescope').setup{
   defaults = {
+    file_ignore_patterns = {'node_modules/.*'},
     mappings = {
       i = {
         ["<esc>"] = actions.close
@@ -354,7 +422,7 @@ EOF
 " -------------- FILE EXPLORER -----------------------
 nnoremap <leader>tt :NvimTreeToggle<CR>
 nnoremap <leader>tr :NvimTreeRefresh<CR>
-nnoremap <leader>tn :NvimTreeFindFile<CR>
+nnoremap <leader>tf :NvimTreeFindFile<CR>
 
 let g:nvim_tree_indent_markers = 1
 
@@ -383,12 +451,13 @@ let g:NERDTreeMinimalUI = 1
 let g:NERDTreeIgnore = ['.gitconfig', '.DS_Store']
 let g:NERDTreeStatusline = ''
 let g:NERDTreeWinSize=45
+
 " -------------- NERDTREE ----------------------------
 "
 " -------------- LIGHTLINE  ----------------------------
 
 let g:lightline = {
-      \ 'colorscheme': 'wombat',
+      \ 'colorscheme': 'edge',
       \ 'active': {
       \   'left': [ [ 'mode', 'paste' ],
       \             [ 'gitbranch', 'readonly', 'filename', 'modified' ] ]
@@ -402,7 +471,7 @@ let g:lightline = {
 
 " -------------- COC ----------------------------------
 
-let g:coc_global_extensions = ['coc-css', 'coc-html', 'coc-json' ]
+let g:coc_global_extensions = ['coc-css', 'coc-html', 'coc-json', 'coc-tsserver', 'coc-snippets', 'coc-highlight', 'coc-vetur' ]
 
 " coc-tsserver        " javascript/typescript server - completion, refactor etc
 " coc-tslint-plugin   " javascript/tyescript linting
@@ -416,60 +485,6 @@ let g:coc_global_extensions = ['coc-css', 'coc-html', 'coc-json' ]
 " coc-css             " css
 " -------------- COC ----------------------------------
 "
-" -------------- ALE -------------------------------
-"
-"ALE settings
-let g:ale_disable_lsp = 1
-
-nmap <silent> <C-e> <Plug>(ale_next_wrap)
-
-" don’t lint on open files
-let g:ale_lint_on_enter = 0
-
-" lint on save
-let g:ale_lint_on_save = 1
-
-" make it prettier
-let g:ale_sign_error = '✘'
-let g:ale_sign_warning = '●'
-augroup FiletypeGroup
-    autocmd!
-    au BufNewFile,BufRead *.jsx set filetype=javascript.jsx
-augroup END
-
-let g:ale_linter_aliases = {
-            \ 'jsx': ['css', 'javascript'],
-            \ 'vue': ['eslint', 'vls']
-            \}
-
-let g:ale_linters = {
-            \ 'jsx': ['stylelint', 'eslint'],
-            \ 'rust': ['analyzer', 'cargo', 'rls'],
-            \ 'vim': ['vint'],
-            \ 'zsh': ['shell', 'shellcheck'],
-            \ 'markdown': ['md', 'txt'],
-            \}
-
-
-let g:ale_fixers = {
-            \ 'javascript': ['eslint'],
-            \ '*': ['remove_trailing_lines', 'trim_whitespace'],
-            \ 'rust': ['rustfmt'],
-            \}
-
-" let g:ale_fix_on_save = 1
-
-let g:ale_sign_column_always = 1
-let g:ale_echo_msg_error_str = 'E'
-let g:ale_echo_msg_warning_str = 'W'
-let g:ale_echo_msg_format = '[%linter%] %s [%severity%]'
-let g:ale_lint_on_insert_leave = 1
-let g:ale_set_loclist = 1
-let g:ale_set_quickfix = 0
-let g:ale_open_list = 0
-let g:ale_list_window_size = 5
-
-" -------------- ALE -------------------------------
 "
 " Buffer
 " Buffer delete: alt - w
@@ -546,3 +561,14 @@ inoremap [,<CR> [<CR>],<ESC>O
 inoremap {,<CR> {<CR>},<ESC>O
 
 " --------------- AUTO CLOSE -----------------------
+
+" --------------- GIT GUTTER -----------------------
+let g:gitgutter_map_keys = 0
+" --------------- GIT GUTTER -----------------------
+"
+"  -------------- UPPERCASE COMMANDS ----------------
+
+:command! -bar -bang Q quit<bang>
+:command! -bar -bang W write<bang>
+
+"  -------------- UPPERCASE COMMAND ----------------
