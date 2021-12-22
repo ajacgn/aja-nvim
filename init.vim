@@ -123,6 +123,7 @@ Plug 'scrooloose/nerdtree', { 'on': ['NERDTreeToggle', 'NERDTreeFind'] }
 Plug 'ryanoasis/vim-devicons'
 Plug 'andymass/vim-matchup'
 Plug 'nathanaelkane/vim-indent-guides'
+Plug 'jiangmiao/auto-pairs'
 
 Plug 'dense-analysis/ale'
 
@@ -131,6 +132,12 @@ Plug 'SirVer/ultisnips'
 
 " Snippets are separated from the engine. Add this if you want them:
 Plug 'honza/vim-snippets'
+
+" Flutter
+Plug 'dart-lang/dart-vim-plugin'
+
+" Dart Lang Snippets
+Plug 'natebosch/dartlang-snippets'
 
 call plug#end()
 
@@ -198,12 +205,12 @@ set showmatch
 set matchtime=3
 " Always show the signcolumn, otherwise it would shift the text each time
 " diagnostics appear/become resolved.
-if has("nvim-0.5.0") || has("patch-8.1.1564")
-  " Recently vim can merge signcolumn and number column into one
-  set signcolumn=number
-else
-  set signcolumn=yes
-endif
+" if has("nvim-0.5.0") || has("patch-8.1.1564")
+"   " Recently vim can merge signcolumn and number column into one
+"   set signcolumn=number
+" else
+"   set signcolumn=yes
+" endif
 
 " DISPLAY ALL MATCHING FILES WHEN WE TAB COMPLETE
 set wildmenu
@@ -286,6 +293,12 @@ map <F5> :setlocal spell!<CR>
 "" nmap <F6> :set invrelativenumber<CR>
 "nmap <F6> :setlocal spell spelllang=de_de<CR>
 "nmap <Leader><F6> :setlocal spell spelllang=en_us<CR>
+" SWITCH BETWEEN RELATIVE AND NO RELATIVE LINE NUMBERS
+augroup lineNumbers
+    autocmd!
+    autocmd InsertEnter * :set norelativenumber
+    autocmd InsertLeave * :set relativenumber
+augroup END
 
 " --------------- quick-scope --------------------
 
@@ -385,11 +398,14 @@ nmap <leader>do <Plug>(coc-codeaction)
 
 " Find files using Telescope command-line sugar.
 nnoremap <leader>ff <cmd>Telescope find_files<cr>
-nnoremap <leader>fg <cmd>Telescope live_grep<cr>
 nnoremap <leader>bb <cmd>Telescope buffers<cr>
+nnoremap <leader>fb <cmd>Telescope current_buffer_fuzzy_find<cr>
+nnoremap <leader>fg <cmd>Telescope live_grep<cr>
 nnoremap <leader>fh <cmd>Telescope help_tags<cr>
 nnoremap <leader>fl <cmd>Telescope git_files<cr>
 nnoremap <leader>f* <cmd>Telescope grep_string<cr>
+nnoremap <leader>fo <cmd>Telescope oldfiles<cr>
+nnoremap <leader>fj <cmd>Telescope jumplist<cr>
 
 lua <<EOF
 local actions = require('telescope.actions')
@@ -420,9 +436,9 @@ EOF
 " -------------- TREESITTER ---------------------------
 
 " -------------- FILE EXPLORER -----------------------
-nnoremap <leader>tt :NvimTreeToggle<CR>
-nnoremap <leader>tr :NvimTreeRefresh<CR>
-nnoremap <leader>tf :NvimTreeFindFile<CR>
+" nnoremap <leader>tt :NvimTreeToggle<CR>
+" nnoremap <leader>tr :NvimTreeRefresh<CR>
+" nnoremap <leader>tf :NvimTreeFindFile<CR>
 
 let g:nvim_tree_indent_markers = 1
 
@@ -448,7 +464,7 @@ nnoremap <silent> ∫ :NERDTreeToggle<CR>
 let NERDTreeDirArrows = 0
 let g:NERDTreeShowHidden = 1
 let g:NERDTreeMinimalUI = 1
-let g:NERDTreeIgnore = ['.gitconfig', '.DS_Store']
+let g:NERDTreeIgnore = ['.gitconfig', '.DS_Store', 'node_modules', '.git', '.next']
 let g:NERDTreeStatusline = ''
 let g:NERDTreeWinSize=45
 
@@ -471,7 +487,20 @@ let g:lightline = {
 
 " -------------- COC ----------------------------------
 
-let g:coc_global_extensions = ['coc-css', 'coc-html', 'coc-json', 'coc-tsserver', 'coc-snippets', 'coc-highlight', 'coc-vetur' ]
+let g:coc_global_extensions = [
+      \ 'coc-css',
+      \ 'coc-eslint',
+      \ 'coc-flutter',
+      \ 'coc-highlight',
+      \ 'coc-html',
+      \ 'coc-json',
+      \ 'coc-prettier',
+      \ 'coc-snippets',
+      \ 'coc-tslint-plugin',
+      \ 'coc-tsserver',
+      \ 'coc-vetur',
+      \ 'coc-yaml',
+      \ ]
 
 " coc-tsserver        " javascript/typescript server - completion, refactor etc
 " coc-tslint-plugin   " javascript/tyescript linting
@@ -490,78 +519,6 @@ let g:coc_global_extensions = ['coc-css', 'coc-html', 'coc-json', 'coc-tsserver'
 " Buffer delete: alt - w
 nnoremap ∑ :bd<CR>
 
-" --------------- AUTO CLOSE -----------------------
-
-" https://alldrops.info/posts/vim-drops/2018-05-15_understand-vim-mappings-and-create-your-own-shortcuts/
-" https://medium.com/vim-drops/custom-autoclose-mappings-1ff90f45c6f5
-
-"autoclose and position cursor to write text inside
-inoremap ' ''<left>
-inoremap ` ``<left>
-inoremap " ""<left>
-inoremap ( ()<left>
-inoremap [ []<left>
-inoremap { {}<left>
-inoremap < <><left>
-"autoclose with ; and position cursor to write text inside
-inoremap '; '';<left><left>
-inoremap `; ``;<left><left>
-inoremap "; "";<left><left>
-inoremap (; ();<left><left>
-inoremap [; [];<left><left>
-inoremap {; {};<left><left>
-"autoclose with , and position cursor to write text inside
-inoremap ', '',<left><left>
-inoremap `, ``,<left><left>
-inoremap ", "",<left><left>
-inoremap (, (),<left><left>
-inoremap [, [],<left><left>
-inoremap {, {},<left><left>
-"autoclose and position cursor after
-inoremap '<tab> ''
-inoremap `<tab> ``
-inoremap "<tab> ""
-inoremap (<tab> ()
-inoremap [<tab> []
-inoremap {<tab> {}
-"autoclose with ; and position cursor after
-inoremap ';<tab> '';
-inoremap `;<tab> ``;
-inoremap ";<tab> "";
-inoremap (;<tab> ();
-inoremap [;<tab> [];
-inoremap {;<tab> {};
-"autoclose with , and position cursor after
-inoremap ',<tab> '',
-inoremap `,<tab> ``,
-inoremap ",<tab> "",
-inoremap (,<tab> (),
-inoremap [,<tab> [],
-inoremap {,<tab> {},
-"autoclose 2 lines below and position cursor in the middle
-inoremap '<CR> '<CR>'<ESC>O
-inoremap `<CR> `<CR>`<ESC>O
-inoremap "<CR> "<CR>"<ESC>O
-inoremap (<CR> (<CR>)<ESC>O
-inoremap [<CR> [<CR>]<ESC>O
-inoremap {<CR> {<CR>}<ESC>O
-"autoclose 2 lines below adding ; and position cursor in the middle
-inoremap ';<CR> '<CR>';<ESC>O
-inoremap `;<CR> `<CR>`;<ESC>O
-inoremap ";<CR> "<CR>";<ESC>O
-inoremap (;<CR> (<CR>);<ESC>O
-inoremap [;<CR> [<CR>];<ESC>O
-inoremap {;<CR> {<CR>};<ESC>O
-"autoclose 2 lines below adding , and position cursor in the middle
-inoremap ',<CR> '<CR>',<ESC>O
-inoremap `,<CR> `<CR>`,<ESC>O
-inoremap ",<CR> "<CR>",<ESC>O
-inoremap (,<CR> (<CR>),<ESC>O
-inoremap [,<CR> [<CR>],<ESC>O
-inoremap {,<CR> {<CR>},<ESC>O
-
-" --------------- AUTO CLOSE -----------------------
-
 " --------------- GIT GUTTER -----------------------
 let g:gitgutter_map_keys = 0
 " --------------- GIT GUTTER -----------------------
@@ -572,3 +529,15 @@ let g:gitgutter_map_keys = 0
 :command! -bar -bang W write<bang>
 
 "  -------------- UPPERCASE COMMAND ----------------
+"
+"  --------------- DART ----------------------------
+let g:dart_format_on_save = 1
+let g:dartfmt_options = ['--fix', '--line-length 120']
+"  --------------- DART ----------------------------
+
+" Use <c-space> to trigger completion.
+if has('nvim')
+  inoremap <silent><expr> <c-space> coc#refresh()
+else
+  inoremap <silent><expr> <c-@> coc#refresh()
+endif
