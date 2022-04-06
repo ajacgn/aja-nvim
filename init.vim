@@ -85,6 +85,9 @@ set nocompatible
 
 call plug#begin('~/.config/nvim/plugged')
 
+" Show what is in the registers
+Plug 'junegunn/vim-peekaboo'
+
 " COC
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
@@ -96,6 +99,7 @@ Plug 'tpope/vim-sensible'
 
 " Color schemes
 Plug 'sainnhe/edge'
+Plug 'morhetz/gruvbox'
 
 " Telescope
 Plug 'nvim-lua/popup.nvim'
@@ -139,7 +143,17 @@ Plug 'dart-lang/dart-vim-plugin'
 " Dart Lang Snippets
 Plug 'natebosch/dartlang-snippets'
 
+Plug 'ap/vim-css-color'
+" Lit and web components
+" Plug 'styled-components/vim-styled-components', { 'branch': 'main' }
+
+Plug 'junegunn/goyo.vim'
+Plug 'junegunn/limelight.vim'
+
 call plug#end()
+
+autocmd! User GoyoEnter Limelight
+autocmd! User GoyoLeave Limelight!
 
 " Trigger configuration. You need to change this to something other than <tab> if you use one of the following:
 " - https://github.com/Valloric/YouCompleteMe
@@ -159,6 +173,7 @@ if has('termguicolors')
 endif
 
 let g:edge_style = 'neon'
+" let g:edge_style = 'neon'
 let g:edge_enable_italic = 1
 let g:edge_disable_italic_comment = 1
 let g:edge_cursor = 'auto'
@@ -180,7 +195,7 @@ set encoding=UTF-8
 set splitright
 set splitbelow
 set number
-set relativenumber
+set norelativenumber
 set hlsearch
 set hidden
 set noerrorbells
@@ -203,6 +218,8 @@ set smartcase
 set title
 set showmatch
 set matchtime=3
+set magic
+
 " Always show the signcolumn, otherwise it would shift the text each time
 " diagnostics appear/become resolved.
 " if has("nvim-0.5.0") || has("patch-8.1.1564")
@@ -294,11 +311,11 @@ map <F5> :setlocal spell!<CR>
 "nmap <F6> :setlocal spell spelllang=de_de<CR>
 "nmap <Leader><F6> :setlocal spell spelllang=en_us<CR>
 " SWITCH BETWEEN RELATIVE AND NO RELATIVE LINE NUMBERS
-augroup lineNumbers
-    autocmd!
-    autocmd InsertEnter * :set norelativenumber
-    autocmd InsertLeave * :set relativenumber
-augroup END
+" augroup lineNumbers
+"     autocmd!
+"     autocmd InsertEnter * :set norelativenumber
+"     autocmd InsertLeave * :set relativenumber
+" augroup END
 
 " --------------- quick-scope --------------------
 
@@ -345,6 +362,10 @@ if has('nvim')
 
   inoremap <silent><expr> <c-@> coc#refresh()
 endif
+
+nmap <silent><leader>ca <Plug>(coc-codelens-action)
+vmap <silent><leader>a  <Plug>(coc-codeaction-selected)
+nmap <silent><leader>a  <Plug>(coc-codeaction)
 
 " Change current directory to open file directory
 nnoremap <leader>cd :cd %:p:h<CR>:pwd<CR>
@@ -464,7 +485,7 @@ nnoremap <silent> ∫ :NERDTreeToggle<CR>
 let NERDTreeDirArrows = 0
 let g:NERDTreeShowHidden = 1
 let g:NERDTreeMinimalUI = 1
-let g:NERDTreeIgnore = ['.gitconfig', '.DS_Store', 'node_modules', '.git', '.next']
+let g:NERDTreeIgnore = ['.gitconfig', '.DS_Store', 'node_modules', '.git', '.next', ".vscode", ".storybook"]
 let g:NERDTreeStatusline = ''
 let g:NERDTreeWinSize=45
 
@@ -541,3 +562,10 @@ if has('nvim')
 else
   inoremap <silent><expr> <c-@> coc#refresh()
 endif
+
+" Fold/Unfold toggle -  https://vim.fandom.com/wiki/Folding
+inoremap <F9> <C-O>za
+nnoremap <F9> za
+onoremap <F9> <C-C>za
+vnoremap <F9> zf
+
